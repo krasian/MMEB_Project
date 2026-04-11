@@ -18,4 +18,16 @@ if "image_url" in df.columns:
 
 df = df.drop_duplicates(subset=["image_url"])
 
+# seperate train and test species
+TRAIN_SPECIES = ["blackbird", "blue_tit"]
+TEST_SPECIES = ["robin", "crow"]
+
+name = file.lower()
+
+if any(sp in name for sp in TRAIN_SPECIES):
+    print("train")
+
+elif any(sp in name for sp in TEST_SPECIES):
+    print("test")
+
 
