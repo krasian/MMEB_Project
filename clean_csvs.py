@@ -39,14 +39,22 @@ def clean_df(df, country=None):
 OUTPUT_FOLDER = "data/clean_csv"
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-out_path = os.path.join(OUTPUT_FOLDER, file)
+out_name = file.replace(".csv", "_clean.csv")
+out_path = os.path.join(OUTPUT_FOLDER, out_name)
 df.to_csv(out_path, index = False)
 
 MAX_SAMPLES = 2000
 
 if len(df) > MAX_SAMPLES:
-    df = df.sample(MAX_SAMPLES)
-    
+    df = df.sample(MAX_SAMPLES, random_state =42)
+
+
+print(f"\nProcessing: {file}")
+print("Final rows:", len(df))
+print("Saved:", out_path)
+
+
+
 
 
 
