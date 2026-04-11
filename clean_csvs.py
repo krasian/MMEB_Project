@@ -40,7 +40,7 @@ OUTPUT_FOLDER = "data/clean_csv"
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 out_path = os.path.join(OUTPUT_FOLDER, file)
-df.to_csv(out_path)
+df.to_csv(out_path, index = False)
 
 
 
