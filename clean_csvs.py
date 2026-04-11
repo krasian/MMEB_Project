@@ -11,16 +11,6 @@ for file in files:
         df = pd.read_csv(file)
         print(df.head())
 
-df = df.dropna(subset=["image_url"])
-
-if "image_url" in df.columns:
-    df = df.dropna(subset=["image_url"])
-
-df = df.drop_duplicates(subset=["image_url"])
-
-if any(sp in name for sp in TRAIN_SPECIES):
-    if "place_country_name" in df.columns:
-        df = df[df["place_country_name"] == "Netherlands"]
 
 # seperate train and test species
 TRAIN_SPECIES = ["blackbird", "blue_tit"]
@@ -33,6 +23,17 @@ if any(sp in name for sp in TRAIN_SPECIES):
 
 elif any(sp in name for sp in TEST_SPECIES):
     print("test")
+
+# clean function
+def clean_df(df, country=None):
+
+    df = df.dropna(subset=["image_url"])
+    df = df.drop_duplicates(subset=["image_url"])
+
+    if country:
+        df = df[df["place_country_name"] == country]
+
+    return df
 
 
 
