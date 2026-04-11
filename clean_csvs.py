@@ -42,6 +42,13 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 out_path = os.path.join(OUTPUT_FOLDER, file)
 df.to_csv(out_path, index = False)
 
+MAX_SAMPLES = 2000
+
+if len(df) > MAX_SAMPLES:
+    df = df.sample(MAX_SAMPLES)
+    
+
+
 
 
 
