@@ -30,10 +30,12 @@ def clean_df(df, country=None):
     df = df.dropna(subset=["image_url"])
     df = df.drop_duplicates(subset=["image_url"])
 
-    if country:
+    if country and "place_country_name" in df.columns:
         df = df[df["place_country_name"] == country]
 
     return df
+
+
 
 
 
