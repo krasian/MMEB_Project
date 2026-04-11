@@ -10,3 +10,12 @@ for file in files:
         path = os.path.join(INPUT_FOLDER, file)
         df = pd.read_csv(file)
         print(df.head())
+
+df = df.dropna(subset=["image_url"])
+
+if "image_url" in df.columns:
+    df = df.dropna(subset=["image_url"])
+
+df = df.drop_duplicates(subset=["image_url"])
+
+
