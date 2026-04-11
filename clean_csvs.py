@@ -13,8 +13,8 @@ for file in files:
 
 
 # seperate train and test species
-TRAIN_SPECIES = ["blackbird", "blue_tit"]
-TEST_SPECIES = ["robin", "crow"]
+TRAIN_SPECIES = ["blackbird", "blue_tit", "great_tit", "sparrow"]
+TEST_SPECIES = ["robin", "crow", "starling", "thrush","flamingo","toucan"]
 
 name = file.lower()
 
@@ -34,6 +34,13 @@ def clean_df(df, country=None):
         df = df[df["place_country_name"] == country]
 
     return df
+
+
+OUTPUT_FOLDER = "data/clean_csv"
+os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+
+out_path = os.path.join(OUTPUT_FOLDER, file)
+df.to_csv(out_path)
 
 
 
