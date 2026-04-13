@@ -22,7 +22,29 @@ def download_image(url, save_path):
 
 
 def process_csv(file_path):
-    pass
+    df = pd.read_csv(file_path)
+
+    if "image_url" not in df.columns:
+        print("No image_url column, skipping:", file_path)
+        return
+
+    species_name = os.path.basename(file_path).replace("_clean.csv", "")
+    species_folder = os.path.join(OUTPUT_FOLDER, species_name)
+
+    os.makedirs(species_folder, exist_ok=True)
+
+    print(f"\nDownloading images for: {species_name}")
+
+    success = 0
+
+    for i, url in tqdm(enumerate(df["image_url"]), total=len(df)):
+        filename = f"{i}.jpg"
+        save_path = os.path.join(species_folder, filename)
+
+        if download_image(url, save_path):
+            success += 1
+
+    print(f"Downloaded {success}/{len(df)} images")
 
 
 def main():
