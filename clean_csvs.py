@@ -24,41 +24,50 @@ def clean_df(df, country=None):
 
     return df
 
-os.makedirs(OUTPUT_FOLDER, exist_ok=True)
+#main
+def main():
 
-files = [f for f in os.listdir(INPUT_FOLDER) if f.endswith(".csv")]
+    os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
-for file in files:
+    files = [f for f in os.listdir(INPUT_FOLDER) if f.endswith(".csv")]
 
-    path = os.path.join(INPUT_FOLDER, file)
-    name = file.lower()
+    for file in files:
 
-    print(f"\nProcessing: {file}")
+        path = os.path.join(INPUT_FOLDER, file)
+        name = file.lower()
 
-    df = pd.read_csv(path)
+        print(f"\nProcessing: {file}")
 
-    if any(sp in name for sp in TRAIN_SPECIES):
-        print("TRAIN species (Netherlands filter)")
-        df = clean_df(df, country="Netherlands")
+        df = pd.read_csv(path)
 
-    elif any(sp in name for sp in TEST_SPECIES):
-        print("TEST species (no country filter)")
-        df = clean_df(df)
+        # detect train and test
+        if any(sp in name for sp in TRAIN_SPECIES):
+            print("TRAIN species (Netherlands filter)")
+            df = clean_df(df, country="Netherlands")
 
-    else:
-        print("SKIPPED (unknown species)")
-        continue
+        elif any(sp in name for sp in TEST_SPECIES):
+            print("TEST species (no country filter)")
+            df = clean_df(df)
 
-    if MAX_SAMPLES and len(df) > MAX_SAMPLES:
-        df = df.sample(MAX_SAMPLES, random_state=42)
+        else:
+            print("SKIPPED (unknown species)")
+            continue
 
-    print("Final rows:", len(df))
+        # limit size
+        if MAX_SAMPLES and len(df) > MAX_SAMPLES:
+            df = df.sample(MAX_SAMPLES, random_state=42)
 
-    out_name = file.replace(".csv", "_clean.csv")
-    out_path = os.path.join(OUTPUT_FOLDER, out_name)
+        print("Final rows:", len(df))
 
-    df.to_csv(out_path, index=False)
-    print("Saved:", out_path)
+        out_name = file.replace(".csv", "_clean.csv")
+        out_path = os.path.join(OUTPUT_FOLDER, out_name)
+
+        df.to_csv(out_path, index=False)
+        print("Saved:", out_path)
+
+
+if __name__ == "__main__":
+    main()
 
 
 
