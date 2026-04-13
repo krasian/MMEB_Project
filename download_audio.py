@@ -1,5 +1,6 @@
 import os
 import requests
+import json
 import time
 
 # config
@@ -77,13 +78,37 @@ def collect_recordings(species_name):
     return collected
 
 
+def download_recordings(recordings, species_name):
+    species_dir = os.path.join(OUTPUT_DIR, species_name.replace(" ", "_"))
+    os.makedirs(species_dir, exist_ok=True)
+
+    with open(os.path.join(species_dir, "metadata.json"), "w") as f:
+        json.dump(recordings, f, indent=2)
+
+    for rec in recordings:
+        raw_url = rec.get("file", "")
+        if not raw_url:
+            continue
+
+        file_url = "https:" + raw_url if raw_url.startswith("//") else raw_url
+        file_path = os.path.join(species_dir, f"{rec['id']}.mp3")
+
+        try:
+            r = requests.get(file_url, stream=True, timeout=30)
+            r.raise_for_status()
+            with open(file_path, "wb") as f:
+                for chunk in r.iter_content(8192):
+                    f.write(chunk)
+        except Exception as e:
+            print(f"Error downloading {file_url}: {e}")
+
+
 def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     for species in SPECIES_LIST:
-        print(f"Collecting {species}")
         recs = collect_recordings(species)
-        print(f"Collected {len(recs)} recordings")
+        download_recordings(recs, species)
 
 
 if __name__ == "__main__":
