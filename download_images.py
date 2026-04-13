@@ -10,7 +10,15 @@ TIMEOUT = 10
 
 
 def download_image(url, save_path):
-    pass
+    try:
+        response = requests.get(url, timeout=TIMEOUT)
+        if response.status_code == 200:
+            with open(save_path, "wb") as f:
+                f.write(response.content)
+            return True
+    except Exception as e:
+        return False
+    return False
 
 
 def process_csv(file_path):
