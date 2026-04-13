@@ -32,14 +32,14 @@ def fetch_recordings_by_quality(species_name, quality):
     query = f'gen:{genus} sp:{sp} cnt:Netherlands q:{quality}'
 
     while True:
-        params = {"query": query, "key": API_KEY, "page": page}
+        params = {"query": query, "key": API_KEY, "page": page, "per_page": 500}
 
         try:
             response = requests.get(BASE_URL, params=params, timeout=30)
             response.raise_for_status()
             data = response.json()
         except Exception as e:
-            print(f"Request failed: {e}")
+            print(f"Request failed on page {page}: {e}")
             break
 
         recordings = data.get("recordings", [])
@@ -57,13 +57,33 @@ def fetch_recordings_by_quality(species_name, quality):
     return all_recordings
 
 
+def collect_recordings(species_name):
+    collected = []
+    seen_ids = set()
+
+    for quality in QUALITY_GRADES:
+        if len(collected) >= MAX_PER_SPECIES:
+            break
+
+        recs = fetch_recordings_by_quality(species_name, quality)
+
+        new_recs = [r for r in recs if r["id"] not in seen_ids]
+        for r in new_recs:
+            seen_ids.add(r["id"])
+
+        slots_left = MAX_PER_SPECIES - len(collected)
+        collected.extend(new_recs[:slots_left])
+
+    return collected
+
+
 def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     for species in SPECIES_LIST:
-        print(f"Fetching {species}")
-        recs = fetch_recordings_by_quality(species, "A")
-        print(f"Found {len(recs)} recordings")
+        print(f"Collecting {species}")
+        recs = collect_recordings(species)
+        print(f"Collected {len(recs)} recordings")
 
 
 if __name__ == "__main__":
