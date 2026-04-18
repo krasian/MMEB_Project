@@ -32,7 +32,8 @@ def fetch_recordings_by_quality(species_name, quality):
     page = 1
     all_recordings = []
     genus, sp = species_name.split(" ", 1)
-    query = f'gen:{genus} sp:{sp} cnt:Netherlands q:{quality}'
+    query = f'gen:{genus} sp:{sp} (cnt:Netherlands  OR cnt:Germany OR cnt:France OR cnt:Belgium) q:{quality}'
+    # query = f'gen:{genus} sp:{sp} q:{quality}'
 
     while True:
         params = {"query": query, "key": API_KEY, "page": page, "per_page": 500}
@@ -93,7 +94,7 @@ def download_recordings(recordings, species_name):
     with open(os.path.join(species_dir, "metadata.json"), "w") as f:
         json.dump(recordings, f, indent=2)
 
-    print(f"  Downloading {len(recordings)} files → {species_dir}")
+    print(f"  Downloading {len(recordings)} files to {species_dir}")
 
     for rec in tqdm(recordings, desc=f"  {species_name}"):
         raw_url = rec.get("file", "")
