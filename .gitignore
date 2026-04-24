@@ -1,0 +1,17 @@
+# Audio dataset
+xenocanto_data/
+
+# Python
+__pycache__/
+*.pyc
+.env
+venv/
+.venv/
+
+# IDE files
+.vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
