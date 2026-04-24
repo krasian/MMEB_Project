@@ -1,0 +1,185 @@
+data:
+  # Root folder containing the species CSVs and image subfolders.
+  #   Windows:  set DATA_ROOT=D:\path\to\images
+  #   Linux:    export DATA_ROOT=/path/to/images
+  # Can also be overridden per-run with --data-root.
+  data_root: "D:/test/data/raw"
+
+  # One CSV per known species (train + val + test).
+  # Each CSV must have an "image_path" column.
+  # Add or remove entries freely — num_classes is derived from this list.
+  known_csvs:
+    "Common Blackbird":  "updated_blackbird_data.csv"
+    "Eurasian Blue Tit": "updated_EurasianBlueTit_data.csv"
+    "Great Tit":         "updated_GreatTit_data.csv"
+    "House Sparrow":     "updated_HouseSparrow_data.csv"
+
+  # One CSV per outlier species (test time only — never seen during training).
+  # All entries are pooled into a single outlier test set.
+  outlier_csvs:
+    "European Starling": "updated_EuropeanStarling.csv"
+    "Crow": "updated_crow_data.csv"
+    #"Flamingo": "updated_flamingo_data.csv"
+
+  # Train / val / test split ratios for each known species.
+  # test_ratio is implicit: 1.0 - train_ratio - val_ratio.
+  train_ratio: 0.70
+  val_ratio:   0.15
+  # test_ratio: 0.15  (derived automatically)
+
+  # Random seed for reproducible splits.
+  split_seed: 42
+
+
+model:
+  # Size of the learned embedding vector per image.
+  # Larger = more expressive, but slower and uses more VRAM.
+  # Must match the checkpoint if loading a pre-trained model.
+  embedding_dim: 512
+
+  # Input image resolution expected by EfficientNet-B0.
+  # Do not change unless you switch backbone architectures.
+  img_size: 224
+
+  # Load ImageNet-pretrained EfficientNet-B0 weights at model init.
+  pretrained: true
+
+
+training:
+  batch_size:   16       # Safe for ~8 GB VRAM. Reduce if you run out of memory.
+  num_epochs:   40
+  learning_rate: 0.0001          # Full LR for the embedding head.
+  backbone_lr_factor: 0.1        # Backbone gets LR * this factor (adapts more slowly).
+  weight_decay: 0.0001
+
+  # ArcFace loss hyperparameters.
+  # s (scale): controls how peaked the softmax distribution is.
+  # m (margin): angular margin in radians — larger = tighter, more separated clusters.
+  arcface_s: 64.0
+  arcface_m: 0.8
+
+  # DataLoader workers. Set to 0 on Windows if you hit multiprocessing errors.
+  num_workers: 4
+
+  # pin_memory is disabled — not supported by torch-directml.
+  pin_memory: false
+
+
+
+threshold:
+  # Percentile of training-set centroid distances used to set the outlier threshold.
+  # Lower (e.g. 70) → stricter → more outliers caught, more known birds wrongly rejected.
+  # Higher (e.g. 95) → looser  → fewer outliers caught, fewer known birds wrongly rejected.
+  # Re-run with --skip-training after changing this to recalibrate without retraining.
+  percentile: 60
+
+
+
+augmentation:
+  # Training augmentations (all random).
+  train:
+    random_resized_crop_scale: [0.7, 1.0]   # Min/max scale for random crop.
+    horizontal_flip: true
+    color_jitter:
+      brightness: 0.3
+      contrast:   0.3
+      saturation: 0.2
+      hue:        0.05
+    rotation_degrees: 15
+
+  # Validation / test preprocessing (deterministic).
+  eval:
+    resize_factor: 1.14    # Resize to img_size * this, then centre-crop to img_size.
+
+  # ImageNet normalisation constants (do not change unless you switch backbone).
+  normalize:
+    mean: [0.485, 0.456, 0.406]
+    std:  [0.229, 0.224, 0.225]
+
+
+dataset_prep:
+  # Default destination folder when running prepare_dataset.py split.
+  dest_dir: "data"
+
+  # Supported image extensions scanned when splitting raw folders.
+  image_extensions: [".jpg", ".jpeg", ".png", ".webp"]
+
+  # Split ratios used by the split subcommand.
+  # These mirror data.train_ratio / data.val_ratio above —
+  # keep them in sync if you change one.
+  train_ratio: 0.70
+  val_ratio:   0.15
+  test_ratio:  0.15
+
+  # Random seed
+  seed: 42
+
+
+paths:
+  # Saved model weights and calibration artifacts.
+  checkpoint_dir: "checkpoints"
+  # Files saved here: best_model.pt, centroids.npy,
+  # centroid_threshold.npy, train_embeddings.npy, classes.json
+
+  # Evaluation plots and metrics.
+  results_dir: "results"
+  # Files saved here: centroid_roc_pr.png, centroid_distribution.png,
+  # embedding_space.png, metrics.json
+
+
+
+evaluation:
+  # Dimensionality reduction method for the embedding space plot.
+  # "tsne" always works; "umap" is faster and often clearer
+  # but requires: pip install umap-learn
+  embedding_viz_method: "tsne"   # "tsne" | "umap"
+
+  # t-SNE settings (used when embedding_viz_method is "tsne").
+  tsne:
+    perplexity: 30
+    max_iter:   1000
+    random_state: 42
+
+  # Plot output resolution in DPI.
+  plot_dpi: 150
+
+  # Colour palette for known species (qualitative, cycles if > 12 classes).
+  known_colors:
+    - "#2C3E50"
+    - "#4C8BF5"
+    - "#F5A623"
+    - "#27AE60"
+    - "#8E44AD"
+    - "#16A085"
+    - "#D35400"
+    - "#2980B9"
+    - "#C0392B"
+    - "#7F8C8D"
+    - "#F39C12"
+    - "#1ABC9C"
+
+  # Colour palette for outlier species (warm/red tones so they stand out).
+  outlier_colors:
+    - "#E74C3C"
+    - "#E91E63"
+    - "#FF5722"
+    - "#AD1457"
+    - "#BF360C"
+    - "#880E4F"
+
+
+
+predict:
+  # Image file extensions recognised by the folder scanner.
+  image_extensions: [".jpg", ".jpeg", ".png", ".webp", ".bmp"]
+
+  # Default output filename when --save is passed.
+  csv_output_name: "predictions.csv"
+
+
+
+logging:
+  # Python logging level for the pipeline logger.
+  # Options: DEBUG, INFO, WARNING, ERROR
+  level: "WARNING"
+  format: "%(levelname)s %(name)s: %(message)s"
