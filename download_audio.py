@@ -9,39 +9,52 @@ API_KEY = "346c4d05b60516e9707d6fccf84cbcc3067acca0"
 BASE_URL = "https://xeno-canto.org/api/3/recordings"
 
 SPECIES_LIST = [
-    "Turdus merula",      # Eurasian Blackbird
+    "Turdus merula",          # Eurasian Blackbird
     "Cyanistes caeruleus",    # Eurasian Blue Tit
-    "Sturnus vulgaris",   # European Starling
-    "Parus major",         # Great Tit
-    "Passer domesticus",    # House Sparrow
+    "Sturnus vulgaris",       # European Starling
+    "Parus major",            # Great Tit
+    "Passer domesticus",      # House Sparrow
     "Corvus corone",          # Carrion Crow
     "Phoenicopterus roseus",  # Greater Flamingo
-    "Ramphastos sulfuratus",  # Keel-billed Toucan
+    "Anas platyrhynchos",     # Mallard
     "Turdus philomelos",      # Song Thrush
     "Erithacus rubecula",     # European Robin
 ]
+
+TRAIN_SPECIES = {
+    "Turdus merula",         # Eurasian Blackbird
+    "Parus major",           # Great Tit
+    "Cyanistes caeruleus",   # Eurasian Blue Tit
+    "Passer domesticus",     # House Sparrow
+}
+
+TEST_SPECIES = {
+    "Sturnus vulgaris",      # European Starling
+    "Corvus corone",         # Carrion Crow
+    "Phoenicopterus roseus", # Greater Flamingo
+    "Anas platyrhynchos",    # Mallard
+    "Erithacus rubecula",    # European Robin
+    "Turdus philomelos",     # Song Thrush
+}
 
 OUTPUT_DIR = "xenocanto_data"
 MIN_PER_SPECIES = 300
 MAX_PER_SPECIES = 300
 QUALITY_GRADES = ["A", "B", "C"]
 
-
 # functions
 def fetch_recordings_by_quality(species_name, quality):
     page = 1
     all_recordings = []
     genus, sp = species_name.split(" ", 1)
-    countries = ["Netherlands", "Germany", "France", "Belgium"]
+
+    if species_name in TRAIN_SPECIES:
+        query = f'gen:{genus} sp:{sp} area:europe q:{quality}'
+    else:
+        query = f'gen:{genus} sp:{sp} q:{quality}'
 
     while True:
-        query = f'gen:"{genus}" sp:"{sp}" q:"{quality}"'
-        params = {
-            "query": query,
-            "key": API_KEY,
-            "page": page,
-            "per_page": 500,
-        }
+        params = {"query": query, "key": API_KEY, "page": page, "per_page": 500}
 
         try:
             response = requests.get(BASE_URL, params=params, timeout=30)
@@ -52,8 +65,6 @@ def fetch_recordings_by_quality(species_name, quality):
             break
 
         recordings = data.get("recordings", [])
-        recordings = [r for r in recordings if r.get("cnt") in countries]
-
         if not recordings:
             break
 
@@ -97,7 +108,6 @@ def download_recordings(recordings, species_name):
     species_dir = os.path.join(OUTPUT_DIR, species_name.replace(" ", "_"))
     os.makedirs(species_dir, exist_ok=True)
 
-    # Save combined metadata
     with open(os.path.join(species_dir, "metadata.json"), "w") as f:
         json.dump(recordings, f, indent=2)
 
