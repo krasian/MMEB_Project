@@ -32,11 +32,16 @@ def fetch_recordings_by_quality(species_name, quality):
     page = 1
     all_recordings = []
     genus, sp = species_name.split(" ", 1)
-    query = f'gen:{genus} sp:{sp} (cnt:Netherlands  OR cnt:Germany OR cnt:France OR cnt:Belgium) q:{quality}'
-    # query = f'gen:{genus} sp:{sp} q:{quality}'
+    countries = ["Netherlands", "Germany", "France", "Belgium"]
 
     while True:
-        params = {"query": query, "key": API_KEY, "page": page, "per_page": 500}
+        query = f'gen:"{genus}" sp:"{sp}" q:"{quality}"'
+        params = {
+            "query": query,
+            "key": API_KEY,
+            "page": page,
+            "per_page": 500,
+        }
 
         try:
             response = requests.get(BASE_URL, params=params, timeout=30)
@@ -47,6 +52,8 @@ def fetch_recordings_by_quality(species_name, quality):
             break
 
         recordings = data.get("recordings", [])
+        recordings = [r for r in recordings if r.get("cnt") in countries]
+
         if not recordings:
             break
 
