@@ -19,6 +19,7 @@ SPECIES_LIST = [
     "Ramphastos sulfuratus",  # Keel-billed Toucan
     "Turdus philomelos",      # Song Thrush
     "Erithacus rubecula",     # European Robin
+    "Anas platyrhynchos",    # Mallard
 ]
 
 OUTPUT_DIR = "xenocanto_data"
@@ -28,6 +29,13 @@ QUALITY_GRADES = ["A", "B", "C"]
 
 
 # functions
+def count_existing_recordings(species_name):
+    species_dir = os.path.join(OUTPUT_DIR, species_name.replace(" ", "_"))
+    if not os.path.exists(species_dir):
+        return 0
+    return len([f for f in os.listdir(species_dir) if f.endswith('.mp3')])
+
+
 def fetch_recordings_by_quality(species_name, quality):
     page = 1
     all_recordings = []
@@ -138,6 +146,19 @@ def main():
     for i, species in enumerate(SPECIES_LIST, 1):
         print(f"[{i}/{len(SPECIES_LIST)}] {species}")
 
+        # Count existing recordings
+        existing_count = count_existing_recordings(species)
+        
+        # Skip if already have 300 or more
+        if existing_count >= MAX_PER_SPECIES:
+            print(f"Already have {existing_count} recordings (target {MAX_PER_SPECIES}), skipping.\n")
+            summary.append({"species": species, "downloaded": 0, "status": "already_have_enough"})
+            continue
+        
+        # Only proceed if we need more recordings
+        needed = MAX_PER_SPECIES - existing_count
+        print(f"Currently have {existing_count}, need {needed} more...")
+        
         recordings = collect_recordings(species)
 
         if not recordings:
