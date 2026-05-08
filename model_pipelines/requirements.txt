@@ -1,0 +1,50 @@
+# Bird Species Anomaly Detection — dependencies
+#
+# ── Environment ──────────────────────────────────────────────────────────────
+# Python  : 3.10  (required — torch-directml wheels are Python-version specific)
+# Hardware: any DirectX 12 GPU on Windows (AMD, Intel, NVIDIA)
+#
+# ── Installation order matters ───────────────────────────────────────────────
+# Install torch-directml FIRST. It will pull in the exact torch and torchvision
+# versions it was built against. Do NOT install torch/torchvision separately
+# beforehand — pip will conflict.
+#
+#   pip install torch-directml==0.2.0.dev230426
+#   pip install -r requirements.txt
+#
+# ── Upgrading torch-directml ─────────────────────────────────────────────────
+# The latest release is 0.2.5.dev240914, which pins torch==2.4.1 and
+# torchvision==0.19.1. You can upgrade if needed, but the versions below
+# reflect the environment that is confirmed working.
+#
+# ── Non-DirectML setup ───────────────────────────────────────────────────────
+# CUDA:    pip install torch==2.0.0 torchvision==0.15.1 --index-url https://download.pytorch.org/whl/cu118
+# CPU:     pip install torch==2.0.0 torchvision==0.15.1
+# Then:    pip install -r requirements.txt  (with the torch-directml line removed)
+#
+# ─────────────────────────────────────────────────────────────────────────────
+
+# DirectML backend — owns the torch and torchvision pins below.
+# Remove this line for CUDA or CPU installs.
+torch-directml==0.2.0.dev230426
+
+# These are pulled in automatically by torch-directml above.
+# Listed here as documentation of the confirmed working versions.
+# Do NOT uncomment these when using torch-directml.
+# torch==2.0.0
+# torchvision==0.15.1
+
+# Scientific stack — exact confirmed versions
+numpy==1.26.4
+pandas==2.3.3
+scikit-learn==1.7.2
+
+# Image handling & visualisation
+Pillow==12.2.0
+matplotlib==3.10.8
+
+# Utilities
+tqdm==4.67.3
+
+# Optional — faster embedding visualisation (not installed in base environment)
+# umap-learn>=0.5.3
