@@ -83,7 +83,10 @@ def evaluate_centroid_detector(model, test_known: list, test_outlier: list):
     print("\n── Evaluating centroid detector ──")
 
     centroids   = np.load(os.path.join(cfg.checkpoint_directory, "centroids.npy"))
+    if cfg.distance_metric == "mahalanobis":
     covariances = np.load(os.path.join(cfg.checkpoint_directory, "covariances.npy"))
+    else:
+    covariances = None
     threshold   = float(np.load(
         os.path.join(cfg.checkpoint_directory, "centroid_threshold.npy")))
 
