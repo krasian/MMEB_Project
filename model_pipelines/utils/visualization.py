@@ -1,9 +1,10 @@
 """
 Plotting helpers for the visual pipeline:
   - ROC/PR curves
-  - centroid-distance histograms
+  - centroid-distance histograms (pooled and per-species)
   - 2-D embedding-space projections (t-SNE / UMAP)
 """
+import os
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
@@ -20,6 +21,8 @@ except ImportError:
 from config import cfg, names, outlier_names
 from outlier.mahalanobis import min_centroid_distances
 from utils.metrics import build_palette
+from data.visual_dataset import load_csv_paths, make_loader
+from utils.embeddings import extract_embeddings
 
 
 N_KNOWN = len(names)
@@ -29,6 +32,7 @@ PALETTE = build_palette()
 def plot_roc_pr(Xk: np.ndarray, Xo: np.ndarray,
                 centroids: np.ndarray, covariances: np.ndarray,
                 save_path: str):
+    """ROC and Precision-Recall curves for the centroid detector (all outliers pooled)."""
     dk = min_centroid_distances(Xk, centroids, covariances)
     do = min_centroid_distances(Xo, centroids, covariances)
 
@@ -43,6 +47,7 @@ def plot_roc_pr(Xk: np.ndarray, Xo: np.ndarray,
         roc_title = (f"ROC — Known species vs outliers "
                      f"({len(outlier_names)} species pooled)")
 
+    # ROC
     fpr, tpr, _ = roc_curve(y_true, scores)
     auc = roc_auc_score(y_true, scores)
     axes[0].plot(fpr, tpr, lw=2, color="#4C8BF5",
@@ -54,6 +59,7 @@ def plot_roc_pr(Xk: np.ndarray, Xo: np.ndarray,
     axes[0].legend()
     axes[0].grid(True, alpha=0.3)
 
+    # PR
     prec, rec, _ = precision_recall_curve(y_true, scores)
     axes[1].plot(rec, prec, lw=2, color="#4C8BF5", label="Centroid detector")
     axes[1].set_title("Precision-Recall Curve")
@@ -71,6 +77,11 @@ def plot_roc_pr(Xk: np.ndarray, Xo: np.ndarray,
 def plot_distance_distribution(Xk: np.ndarray, Xo: np.ndarray,
                                 centroids: np.ndarray, covariances: np.ndarray,
                                 threshold: float, save_path: str):
+    """
+    Histogram of centroid distances for all known species vs all outliers pooled.
+    A good model shows known species on the left (low distance) and outliers
+    on the right (high distance) with the threshold line separating them.
+    """
     dk = min_centroid_distances(Xk, centroids, covariances)
     do = min_centroid_distances(Xo, centroids, covariances)
 
@@ -99,11 +110,108 @@ def plot_distance_distribution(Xk: np.ndarray, Xo: np.ndarray,
     print(f"  ✓ Distance distribution → {save_path}")
 
 
+def plot_per_species_distributions(model,
+                                   Xk: np.ndarray,
+                                   centroids: np.ndarray,
+                                   covariances: np.ndarray,
+                                   threshold: float,
+                                   save_path: str):
+    """
+    One distance histogram per outlier species, overlaid on the known-species
+    distribution. This reveals which outliers are visually similar to the known
+    species (their histogram overlaps with known) vs easily separable (their
+    histogram sits far to the right).
+
+    Useful for the report: shows the difficulty spectrum from easy outliers
+    (Flamingo, Toucan) to hard outliers (Starling, Thrush, Robin).
+
+    Args:
+        model:       trained BirdEmbeddingModel (used to extract per-species embeddings)
+        Xk:          (N_known, D) embeddings of the known test set
+        centroids:   (C, D) class centroids
+        covariances: per-class covariance matrices (or None for Euclidean)
+        threshold:   calibrated distance threshold
+        save_path:   where to save the figure
+    """
+    dk = min_centroid_distances(Xk, centroids, covariances)
+
+    # Determine a shared x-axis range across all species
+    all_distances = [dk]
+    species_distances = {}
+
+    for species_name, csv_file in cfg.outlier_csv.items():
+        samples = load_csv_paths(csv_file, label=-1)
+        if not samples:
+            continue
+        Xo_sp, _ = extract_embeddings(model, make_loader(samples, "val"))
+        do_sp = min_centroid_distances(Xo_sp, centroids, covariances)
+        species_distances[species_name] = do_sp
+        all_distances.append(do_sp)
+
+    if not species_distances:
+        print("  ⚠ No outlier species found for per-species plot, skipping.")
+        return
+
+    all_concat = np.concatenate(all_distances)
+    x_min = all_concat.min()
+    x_max = all_concat.max()
+    bins  = np.linspace(x_min, x_max, 60)
+
+    n_species = len(species_distances)
+    ncols     = min(3, n_species)
+    nrows     = (n_species + ncols - 1) // ncols
+    fig, axes = plt.subplots(nrows, ncols,
+                             figsize=(6 * ncols, 4 * nrows),
+                             sharey=False)
+
+    # Flatten axes for easy indexing regardless of grid shape
+    if n_species == 1:
+        axes = [axes]
+    else:
+        axes = np.array(axes).flatten()
+
+    for ax, (species_name, do_sp) in zip(axes, species_distances.items()):
+        # Known species background
+        ax.hist(dk, bins=bins, color="#4C8BF5", alpha=0.50,
+                label=f"Known ({len(names)} sp.)")
+
+        # This outlier species
+        color = PALETTE.get(species_name, "#E74C3C")
+        ax.hist(do_sp, bins=bins, color=color, alpha=0.70,
+                label=species_name)
+
+        # Threshold line
+        ax.axvline(threshold, color="black", ls="--", lw=1.5,
+                   label=f"Threshold ({threshold:.2f})")
+
+        # Outlier recall annotation
+        recall = (do_sp > threshold).sum() / len(do_sp) if len(do_sp) > 0 else 0.0
+        ax.set_title(f"{species_name}\n(outlier recall = {recall:.1%})", fontsize=11)
+        ax.set_xlabel("Distance to nearest centroid")
+        ax.set_ylabel("Count")
+        ax.legend(fontsize=8)
+        ax.grid(True, alpha=0.3)
+
+    # Hide any unused subplots
+    for ax in axes[n_species:]:
+        ax.set_visible(False)
+
+    fig.suptitle(
+        "Per-Species Distance Distributions vs Known Species",
+        fontsize=13, fontweight="bold", y=1.01
+    )
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=cfg.result_dpi, bbox_inches="tight")
+    plt.close()
+    print(f"  ✓ Per-species distributions → {save_path}")
+
+
 def plot_embedding_space(all_embs: np.ndarray, all_labels: np.ndarray,
                          save_path: str, method: str = "tsne"):
     """
     2-D projection of all test embeddings coloured by species.
     Known species drawn as circles; outliers drawn as x's.
+    Good separation = tight known clusters with outliers visibly outside them.
     """
     label_names = names + outlier_names
 
