@@ -22,12 +22,14 @@ from outlier.evaluate import (
     evaluate_centroid_detector,
     print_summary_table,
     load_artifacts,
+    _evaluate_per_species
 )
 from utils.embeddings import extract_embeddings
 from utils.visualization import (
     plot_roc_pr,
     plot_distance_distribution,
     plot_embedding_space,
+    plot_per_species_distributions
 )
 
 
@@ -130,12 +132,18 @@ def run_evaluation():
         Xk, Xo, centroids, covariances, threshold,
         os.path.join(cfg.results_directory, "centroid_distribution.png"))
 
+    plot_per_species_distributions(
+        model, Xk, centroids, covariances, threshold,
+        os.path.join(cfg.results_directory, "per_species_distributions.png"))
+
     plot_embedding_space(
         all_embs, all_labels,
         os.path.join(cfg.results_directory, "embedding_space.png"),
         method=cfg.embeding_visulize_method)
 
     print_summary_table(Xk, Xo, centroids, covariances, threshold)
+
+    _evaluate_per_species(model, Xk, centroids, covariances, threshold)
 
     metrics_path = os.path.join(cfg.results_directory, "metrics.json")
     if os.path.exists(metrics_path):
