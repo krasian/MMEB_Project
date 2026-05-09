@@ -17,13 +17,13 @@ data:
     "Crow":              "updated_crow_data.csv"
     "Robin":             "updated_robin_data.csv"
     "Thrush":            "updated_thrush_data.csv"
-    "Toucan":            "updated_toucan_data.csv"
+    
   # One CSV per outlier species.
   # All entries are pooled into a single outlier test set.
   outlier_csvs:
     "European Starling": "updated_EuropeanStarling.csv"
     "Flamingo": "updated_flamingo_data.csv"
-
+    #"Toucan":    "updated_toucan_data.csv"
   # Train / val / test split ratios for each known species.
   train_ratio: 0.70
   val_ratio:   0.15
