@@ -97,7 +97,10 @@ def evaluate_centroid_detector(model, test_known: list, test_outlier: list):
     # ── All outliers pooled ──
     Xo, _ = extract_embeddings(model, make_loader(test_outlier, "val"))
     do     = min_centroid_distances(Xo, centroids, covariances)
-
+    
+    np.save(os.path.join(cfg.results_directory, "visual_scores_known.npy"), -dk)
+    np.save(os.path.join(cfg.results_directory, "visual_scores_outlier.npy"), -do)
+    np.save(os.path.join(cfg.results_directory, "visual_threshold.npy"), threshold)
     # ── Overall metrics ──
     overall = _binary_metrics(dk, do, threshold)
     overall["threshold"] = round(threshold, 6)
