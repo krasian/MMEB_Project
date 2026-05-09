@@ -3,7 +3,7 @@ data:
   #   Windows:  set DATA_ROOT=D:\path\to\images
   #   Linux:    export DATA_ROOT=/path/to/images
   # Can also be overridden per-run with --data-root.
-  data_root: "D:/test/data/raw"
+  data_root: "DATA-ROOT"
 
   # One CSV per known species (train + val + test).
   # Each CSV must have an "image_path" column.
@@ -13,13 +13,16 @@ data:
     "Eurasian Blue Tit": "updated_EurasianBlueTit_data.csv"
     "Great Tit":         "updated_GreatTit_data.csv"
     "House Sparrow":     "updated_HouseSparrow_data.csv"
-
+    "Mallard":           "updated_mallard_data.csv"
+    "Crow":              "updated_crow_data.csv"
+    "Robin":             "updated_robin_data.csv"
+    "Thrush":            "updated_thrush_data.csv"
+    "Toucan":            "updated_toucan_data.csv"
   # One CSV per outlier species.
   # All entries are pooled into a single outlier test set.
   outlier_csvs:
     "European Starling": "updated_EuropeanStarling.csv"
-    "Crow": "updated_crow_data.csv"
-    #"Flamingo": "updated_flamingo_data.csv"
+    "Flamingo": "updated_flamingo_data.csv"
 
   # Train / val / test split ratios for each known species.
   train_ratio: 0.70
