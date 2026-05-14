@@ -3,7 +3,7 @@ data:
   #   Windows:  set DATA_ROOT=D:\path\to\images
   #   Linux:    export DATA_ROOT=/path/to/images
   # Can also be overridden per-run with --data-root.
-  data_root: 'D:\MMEB-Project\data\processed'
+  data_root: 'data-root'
 
   # One CSV per known species (train + val + test).
   # Each CSV must have an "image_path" column.
@@ -24,12 +24,12 @@ data:
     "European Starling": "updated_EuropeanStarling.csv"
     "Flamingo": "updated_flamingo_data.csv"
     "Toucan":            "updated_toucan_data.csv"
-    #"Malard-test":  "updated_mallard_test_data.csv"
+    
 
   # Train / val / test split ratios for each known species.
   train_ratio: 0.70
   val_ratio:   0.15
-  # test_ratio: 0.15  (derived automatically)
+  
 
   # Random seed for reproducible splits.
   split_seed: 42
@@ -58,11 +58,7 @@ training:
   # ArcFace loss hyperparameters.
   # s (scale): controls how peaked the softmax distribution is.
   # m (margin): angular margin in radians — larger = tighter, more separated clusters.
-  #
-  # NOTE: Lowered from 0.8 -> 0.5 (the standard ArcFace paper value).
-  # With the trainable-anchor fix in train_visual.py, the margin actually
-  # bites now; 0.8 was too aggressive and could destabilise training. If
-  # clusters look too loose after retraining, try raising to 0.6.
+  
   arcface_s: 32.0
   arcface_m: 0.3
 
@@ -107,8 +103,8 @@ augmentation:
 
 paths:
 
-   checkpoint_dir: "D:/MMEB-Project/checkpoints"
-   results_dir: "D:/MMEB-Project/results"
+   checkpoint_dir: "checkpoints"
+   results_dir: "results"
 
 
 
