@@ -11,7 +11,13 @@ training-set distances (configurable in config.yaml).
 """
 import numpy as np
 
-from config import cfg
+
+def _get_cfg():
+    try:
+        from model_pipelines.config import cfg
+    except ImportError:
+        from config import cfg
+    return cfg
 
 
 def compute_centroids(embeddings: np.ndarray, labels: np.ndarray,
@@ -37,10 +43,20 @@ def compute_covariances(embeddings: np.ndarray, labels: np.ndarray,
 
 def _mahalanobis_to_class(embeddings: np.ndarray, centroid: np.ndarray,
                           cov: np.ndarray) -> np.ndarray:
-    """Mahalanobis distance from every embedding to one class centroid."""
+    """
+    Mahalanobis distance from every embedding to one class centroid.
+
+    Computes  sqrt( (x - mu)^T  Sigma^-1  (x - mu) )  for every row x.
+
+    Implementation note:
+        The einsum must use TWO distinct indices for the two diff factors
+        ("ni,ij,nj->n"), so the inverse covariance acts as a full matrix.
+        Using "nd,dd,nd->n" would silently collapse to a diagonal-only
+        weighted Euclidean distance and produce inflated, wrong values.
+    """
     inv = np.linalg.inv(cov)
     diff = embeddings - centroid
-    return np.sqrt(np.einsum("nd,dd,nd->n", diff, inv, diff).clip(0))
+    return np.sqrt(np.einsum("ni,ij,nj->n", diff, inv, diff).clip(0))
 
 
 def min_centroid_distances(embeddings: np.ndarray, centroids: np.ndarray,
@@ -65,6 +81,8 @@ def compute_distance_threshold(embeddings: np.ndarray, labels: np.ndarray,
                                centroids: np.ndarray,
                                covariances: np.ndarray = None) -> float:
     """Threshold at cfg.percentile_of_threshold of training distances."""
+    cfg = _get_cfg()
+
     if covariances is None:
         own_centroids = centroids[labels]
         distances = np.linalg.norm(embeddings - own_centroids, axis=1)

@@ -42,7 +42,7 @@ class VisualAnomalyDetector:
     def __init__(self, checkpoint_dir: str = None):
         if checkpoint_dir is None:
             checkpoint_dir = cfg.checkpoint_directory
-
+        self.metric = cfg.distance_metric
         self.transform = get_transforms("val")
         self.device = cfg.device()
         self.classes = names

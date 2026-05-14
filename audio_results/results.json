@@ -1,0 +1,55 @@
+{
+  "auc_roc": 0.8820379173085375,
+  "auc_pr": 0.8225636540351223,
+  "f1": 0.18254894334240893,
+  "accuracy": 0.7883375856049416,
+  "precision": 0.9971671388101983,
+  "recall": 0.10047095761381476,
+  "threshold": 0.9858951210975647,
+  "num_known": 7007,
+  "num_outlier": 22781,
+  "known_correct": 704,
+  "outlier_correct": 22779,
+  "per_class_accuracy": {
+    "Song Thrush": {
+      "accuracy": 0.006097560975609756,
+      "mean_confidence": 0.708037793636322,
+      "num_samples": 1312
+    },
+    "Eurasian Blackbird": {
+      "accuracy": 0.24283765347885403,
+      "mean_confidence": 0.9060041904449463,
+      "num_samples": 1466
+    },
+    "Carrion Crow": {
+      "accuracy": 0.007142857142857143,
+      "mean_confidence": 0.6180409789085388,
+      "num_samples": 280
+    },
+    "European Robin": {
+      "accuracy": 0.048118445404071564,
+      "mean_confidence": 0.7973048686981201,
+      "num_samples": 1621
+    },
+    "Mallard": {
+      "accuracy": 0.125,
+      "mean_confidence": 0.7675259113311768,
+      "num_samples": 120
+    },
+    "Great Tit": {
+      "accuracy": 0.0,
+      "mean_confidence": 0.7199816107749939,
+      "num_samples": 632
+    },
+    "House Sparrow": {
+      "accuracy": 0.2826603325415677,
+      "mean_confidence": 0.9275652170181274,
+      "num_samples": 842
+    },
+    "Eurasian Blue Tit": {
+      "accuracy": 0.009536784741144414,
+      "mean_confidence": 0.686517596244812,
+      "num_samples": 734
+    }
+  }
+}

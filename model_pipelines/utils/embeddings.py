@@ -6,7 +6,10 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from config import cfg
+try:
+    from model_pipelines.config import cfg
+except ImportError:
+    from config import cfg
 
 
 @torch.no_grad()

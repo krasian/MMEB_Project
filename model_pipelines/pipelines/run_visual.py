@@ -17,6 +17,7 @@ from outlier.mahalanobis import (
     compute_centroids,
     compute_covariances,
     compute_distance_threshold,
+    min_centroid_distances
 )
 from outlier.evaluate import (
     evaluate_centroid_detector,
@@ -144,6 +145,13 @@ def run_evaluation():
     print_summary_table(Xk, Xo, centroids, covariances, threshold)
 
     _evaluate_per_species(model, Xk, centroids, covariances, threshold)
+
+    dk_test = min_centroid_distances(Xk, centroids, covariances)
+    do_test = min_centroid_distances(Xo, centroids, covariances)
+    np.save(os.path.join(cfg.results_directory, "visual_scores_known.npy"), -dk_test)
+    np.save(os.path.join(cfg.results_directory, "visual_scores_outlier.npy"), -do_test)
+    np.save(os.path.join(cfg.results_directory, "visual_threshold.npy"), threshold)
+    print("  ✓ Fusion scores saved to results/")
 
     metrics_path = os.path.join(cfg.results_directory, "metrics.json")
     if os.path.exists(metrics_path):

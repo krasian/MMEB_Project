@@ -27,7 +27,8 @@
 # DirectML backend — owns the torch and torchvision pins below.
 # Remove this line for CUDA or CPU installs.
 torch-directml==0.2.0.dev230426
-
+torchaudio==2.0.2
+transformers< 4.41
 # These are pulled in automatically by torch-directml above.
 # Listed here as documentation of the confirmed working versions.
 # Do NOT uncomment these when using torch-directml.
