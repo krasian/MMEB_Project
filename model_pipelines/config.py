@@ -36,8 +36,8 @@ class BaseConfig:
 
     percentile_of_threshold: int = 95
 
-    checkpoint_directory: str = r"D:\MMEB-Project\model_pipelines\checkpoints"
-    results_directory: str = r"D:\MMEB-Project\model_pipelines\results"
+    checkpoint_directory: str = r"D:\MMEB-Project\checkpoints"
+    results_directory: str = r"D:\MMEB-Project\results"
 
     def device(self) -> torch.device:
         """DirectML > CUDA > CPU. Imported lazily to avoid circular imports."""
