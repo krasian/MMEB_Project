@@ -4,7 +4,10 @@ Visual encoder: EfficientNet-B0 backbone with a learned embedding projection hea
 import torch.nn as nn
 from torchvision import models
 
-from config import cfg
+try:
+    from model_pipelines.config import cfg
+except ImportError:
+    from config import cfg
 
 
 class BirdEmbeddingModel(nn.Module):

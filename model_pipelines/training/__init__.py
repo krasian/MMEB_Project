@@ -1,7 +1,3 @@
-"""training package — visual + audio training loops."""
-from .train_visual import train_model
+"""Training loops for visual and audio workflows."""
 
-# Audio exports — populated when train_audio.py is implemented.
-# from .train_audio import ...
-
-__all__ = ["train_model"]
+__all__ = []

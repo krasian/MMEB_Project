@@ -1,11 +1,6 @@
 """utils package — embeddings, metrics, and visualization helpers."""
 from .embeddings import extract_embeddings, save_embeddings, load_embeddings
 from .metrics import build_palette, confusion_counts, precision_recall_f1
-from .visualization import (
-    plot_roc_pr,
-    plot_distance_distribution,
-    plot_embedding_space,
-)
 
 __all__ = [
     "extract_embeddings",
@@ -18,3 +13,10 @@ __all__ = [
     "plot_distance_distribution",
     "plot_embedding_space",
 ]
+
+
+def __getattr__(name):
+    if name in {"plot_roc_pr", "plot_distance_distribution", "plot_embedding_space"}:
+        from . import visualization
+        return getattr(visualization, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -3,7 +3,7 @@ data:
   #   Windows:  set DATA_ROOT=D:\path\to\images
   #   Linux:    export DATA_ROOT=/path/to/images
   # Can also be overridden per-run with --data-root.
-  data_root: "DATA-ROOT"
+  data_root: 'D:\MMEB-Project\data\processed'
 
   # One CSV per known species (train + val + test).
   # Each CSV must have an "image_path" column.
@@ -17,13 +17,15 @@ data:
     "Crow":              "updated_crow_data.csv"
     "Robin":             "updated_robin_data.csv"
     "Thrush":            "updated_thrush_data.csv"
-    
+
   # One CSV per outlier species.
   # All entries are pooled into a single outlier test set.
   outlier_csvs:
     "European Starling": "updated_EuropeanStarling.csv"
     "Flamingo": "updated_flamingo_data.csv"
-    #"Toucan":    "updated_toucan_data.csv"
+    "Toucan":            "updated_toucan_data.csv"
+    #"Malard-test":  "updated_mallard_test_data.csv"
+
   # Train / val / test split ratios for each known species.
   train_ratio: 0.70
   val_ratio:   0.15
@@ -47,7 +49,7 @@ model:
 
 
 training:
-  batch_size:   16       # Reduce if you run out of memory.
+  batch_size:   32       # Reduce if you run out of memory.
   num_epochs:   40
   learning_rate: 0.0001          # Full LR for the embedding head.
   backbone_lr_factor: 0.1        # Backbone gets LR * this factor.
@@ -56,8 +58,13 @@ training:
   # ArcFace loss hyperparameters.
   # s (scale): controls how peaked the softmax distribution is.
   # m (margin): angular margin in radians — larger = tighter, more separated clusters.
-  arcface_s: 64.0
-  arcface_m: 0.8
+  #
+  # NOTE: Lowered from 0.8 -> 0.5 (the standard ArcFace paper value).
+  # With the trainable-anchor fix in train_visual.py, the margin actually
+  # bites now; 0.8 was too aggressive and could destabilise training. If
+  # clusters look too loose after retraining, try raising to 0.6.
+  arcface_s: 32.0
+  arcface_m: 0.3
 
   # DataLoader workers.
   num_workers: 4
@@ -72,7 +79,7 @@ threshold:
   # Lower (e.g. 70) → stricter.
   # Higher (e.g. 95) → looser.
   # Re-run with --skip-training after changing this to recalibrate without retraining.
-  percentile: 60
+  percentile: 90
 
 
 
@@ -99,15 +106,9 @@ augmentation:
 
 
 paths:
-  # Saved model weights and calibration artifacts.
-  checkpoint_dir: "checkpoints"
-  # Files saved here: best_model.pt, centroids.npy,
-  # centroid_threshold.npy, train_embeddings.npy, classes.json
 
-  # Evaluation plots and metrics.
-  results_dir: "results"
-  # Files saved here: centroid_roc_pr.png, centroid_distribution.png,
-  # embedding_space.png, metrics.json
+   checkpoint_dir: "D:/MMEB-Project/checkpoints"
+   results_dir: "D:/MMEB-Project/results"
 
 
 

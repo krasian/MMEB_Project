@@ -11,7 +11,10 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
 
-from config import cfg, class_to_id
+try:
+    from model_pipelines.config import cfg, class_to_id
+except ImportError:
+    from config import cfg, class_to_id
 
 logger = logging.getLogger(__name__)
 
