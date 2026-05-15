@@ -1,0 +1,38 @@
+{
+  "overall": {
+    "TP": 2028,
+    "FN": 652,
+    "TN": 9608,
+    "FP": 1871,
+    "Recall": 0.7567,
+    "Precision": 0.5201,
+    "F1": 0.6165,
+    "AUC-ROC": 0.8811,
+    "AUC-PR": 0.7239,
+    "threshold": 27.656447,
+    "percentile": 95
+  },
+  "per_species": {
+    "European Starling": {
+      "n_samples": 6883,
+      "TN": 5549,
+      "FP": 1334,
+      "outlier_recall": 0.8062,
+      "AUC-ROC": 0.8683
+    },
+    "Flamingo": {
+      "n_samples": 2298,
+      "TN": 2159,
+      "FP": 139,
+      "outlier_recall": 0.9395,
+      "AUC-ROC": 0.9295
+    },
+    "Toucan": {
+      "n_samples": 2298,
+      "TN": 1900,
+      "FP": 398,
+      "outlier_recall": 0.8268,
+      "AUC-ROC": 0.8711
+    }
+  }
+}
