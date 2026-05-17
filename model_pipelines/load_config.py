@@ -22,6 +22,8 @@ import yaml
 from pathlib import Path
 import multiprocessing as mp
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 
 def _resolve_env_vars(text: str) -> str:
     """Replace every ${VAR_NAME} in a YAML string with os.environ[VAR_NAME]."""
@@ -80,11 +82,17 @@ def _all_config_modules():
     return modules
 
 
+def _project_path(value: str) -> str:
+    """Resolve relative project config paths against the repository root."""
+    path = Path(value)
+    return str(path if path.is_absolute() else PROJECT_ROOT / path)
+
+
 def _apply_to_single_cfg(c, y: dict):
     """Write all YAML-driven settings onto a single cfg object."""
     # ── Data ─────────────────────────────────────────────────────
     data = y.get("data", {})
-    c.data_root = data["data_root"]
+    c.data_root = _project_path(data["data_root"])
 
     new_known = dict(data["known_csvs"])
     new_outlier = dict(data["outlier_csvs"])
@@ -138,8 +146,8 @@ def _apply_to_single_cfg(c, y: dict):
 
     # ── Paths ────────────────────────────────────────────────────
     paths = y.get("paths", {})
-    c.checkpoint_directory = paths["checkpoint_dir"]
-    c.results_directory = paths["results_dir"]
+    c.checkpoint_directory = _project_path(paths["checkpoint_dir"])
+    c.results_directory = _project_path(paths["results_dir"])
 
     # ── Evaluation ───────────────────────────────────────────────
     evaluation = y.get("evaluation", {})
