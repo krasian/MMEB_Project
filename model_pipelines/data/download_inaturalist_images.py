@@ -46,7 +46,6 @@ INPUT_CSV = [
     "starling_clean.csv",
     "thrush_clean.csv",
     "toucan_clean.csv",
-    "mallard-test.csv"
 ]
 
 OUTPUT_CSV = [
@@ -61,7 +60,6 @@ OUTPUT_CSV = [
     "updated_EuropeanStarling.csv",
     "updated_thrush_data.csv",
     "updated_toucan_data.csv",
-    'updated_mallard_test_data.csv'
 ]
 
 IMAGE_FOLDER = [
@@ -76,7 +74,6 @@ IMAGE_FOLDER = [
     "downloaded_EuropeanStarling_images",
     "downloaded_thrush_images",
     "downloaded_toucan_images",
-    "downloaded_mallard_test_images"
 ]
 
 LOG_FILE = DATA_PROCESSED_DIR / "download_failures.log"
