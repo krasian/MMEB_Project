@@ -53,7 +53,7 @@ Expected folders:
 
 ```text
 data/
-  raw/
+  clean_csv/
   processed/
 metadata/
 model_pipelines/
@@ -107,7 +107,6 @@ sparrow_clean.csv
 starling_clean.csv
 thrush_clean.csv
 toucan_clean.csv
-mallard-test.csv
 ```
 
 Each input CSV must contain:
