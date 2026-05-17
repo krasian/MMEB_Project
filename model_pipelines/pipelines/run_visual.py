@@ -197,7 +197,7 @@ def run_evaluation():
 
 
 def main():
-    """Parse standalone visual-pipeline CLI arguments and run training flow."""
+    """Standalone CLI entry point for the visual pipeline."""
     parser = argparse.ArgumentParser(description="Visual Pipeline for Bird Anomaly Detection")
     parser.add_argument("--skip-training", action="store_true", help="Skip training")
     parser.add_argument("--config", default=None, help="Path to config.yaml")
