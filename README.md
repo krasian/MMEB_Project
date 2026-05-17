@@ -107,7 +107,6 @@ sparrow_clean.csv
 starling_clean.csv
 thrush_clean.csv
 toucan_clean.csv
-mallard-test.csv
 ```
 
 Each input CSV must contain:
