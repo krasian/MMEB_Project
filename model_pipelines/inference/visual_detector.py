@@ -57,8 +57,6 @@ class VisualAnomalyDetector:
         self.model = load_model()
         self.centroids = np.load(
             os.path.join(checkpoint_dir, "centroids.npy"))
-        self.covariances = np.load(
-            os.path.join(checkpoint_dir, "covariances.npy"))
         self.centroid_threshold = float(np.load(
             os.path.join(checkpoint_dir, "centroid_threshold.npy")))
         if self.metric == "mahalanobis":
