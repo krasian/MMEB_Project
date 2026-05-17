@@ -53,7 +53,7 @@ Expected folders:
 
 ```text
 data/
-  raw/
+  clean_csv/
   processed/
 metadata/
 model_pipelines/
