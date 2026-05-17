@@ -23,10 +23,7 @@ import torch.nn.functional as F
 
 class ArcFaceLoss(nn.Module):
     """
-    Additive angular-margin classification loss for normalized embeddings.
-
-    The module learns one class-anchor vector per known class and applies the
-    angular margin only to the target class logit before cross-entropy.
+    Additive angular-margin loss with learnable class anchors.
     """
 
     def __init__(self, embedding_dim: int, num_classes: int,
@@ -51,7 +48,7 @@ class ArcFaceLoss(nn.Module):
 
     def forward(self, embeddings, labels):
         """
-        Compute ArcFace cross-entropy loss for one embedding batch.
+        Return ArcFace cross-entropy loss for one embedding batch.
 
         Args:
             embeddings: Tensor with shape `[batch_size, embedding_dim]`.
