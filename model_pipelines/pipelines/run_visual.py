@@ -7,31 +7,67 @@ Visual pipeline orchestration:
 """
 import os
 import json
+import argparse
+import sys
+from pathlib import Path
 import numpy as np
 
-from config import cfg, names, outlier_names
-from data.visual_dataset import build_splits, make_loader
-from training.train_visual import train_model
-from inference.visual_detector import load_model
-from outlier.mahalanobis import (
-    compute_centroids,
-    compute_covariances,
-    compute_distance_threshold,
-    min_centroid_distances
-)
-from outlier.evaluate import (
-    evaluate_centroid_detector,
-    print_summary_table,
-    load_artifacts,
-    _evaluate_per_species
-)
-from utils.embeddings import extract_embeddings
-from utils.visualization import (
-    plot_roc_pr,
-    plot_distance_distribution,
-    plot_embedding_space,
-    plot_per_species_distributions
-)
+_HERE = Path(__file__).resolve().parent
+_MODEL_PIPELINES = _HERE.parent
+_PROJECT_ROOT = _MODEL_PIPELINES.parent
+if str(_MODEL_PIPELINES) not in sys.path:
+    sys.path.insert(0, str(_MODEL_PIPELINES))
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
+try:
+    from model_pipelines.config import cfg, names, outlier_names
+    from model_pipelines.data.visual_dataset import build_splits, make_loader
+    from model_pipelines.training.train_visual import train_model
+    from model_pipelines.inference.visual_detector import load_model
+    from model_pipelines.outlier.mahalanobis import (
+        compute_centroids,
+        compute_covariances,
+        compute_distance_threshold,
+        min_centroid_distances,
+    )
+    from model_pipelines.outlier.evaluate import (
+        evaluate_centroid_detector,
+        print_summary_table,
+        load_artifacts,
+        _evaluate_per_species,
+    )
+    from model_pipelines.utils.embeddings import extract_embeddings
+    from model_pipelines.utils.visualization import (
+        plot_roc_pr,
+        plot_distance_distribution,
+        plot_embedding_space,
+        plot_per_species_distributions,
+    )
+except ImportError:
+    from config import cfg, names, outlier_names
+    from data.visual_dataset import build_splits, make_loader
+    from training.train_visual import train_model
+    from inference.visual_detector import load_model
+    from outlier.mahalanobis import (
+        compute_centroids,
+        compute_covariances,
+        compute_distance_threshold,
+        min_centroid_distances,
+    )
+    from outlier.evaluate import (
+        evaluate_centroid_detector,
+        print_summary_table,
+        load_artifacts,
+        _evaluate_per_species,
+    )
+    from utils.embeddings import extract_embeddings
+    from utils.visualization import (
+        plot_roc_pr,
+        plot_distance_distribution,
+        plot_embedding_space,
+        plot_per_species_distributions,
+    )
 
 
 N_KNOWN = len(names)
@@ -158,3 +194,27 @@ def run_evaluation():
         with open(metrics_path) as f:
             print("\n── Saved metrics ──")
             print(json.dumps(json.load(f), indent=2))
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Visual Pipeline for Bird Anomaly Detection")
+    parser.add_argument("--skip-training", action="store_true", help="Skip training")
+    parser.add_argument("--config", default=None, help="Path to config.yaml")
+    parser.add_argument("--data-root", default=None, help="Override visual data root directory")
+    args = parser.parse_args()
+
+    if args.config:
+        try:
+            from model_pipelines.load_config import apply_yaml_config
+        except ImportError:
+            from load_config import apply_yaml_config
+        apply_yaml_config(args.config)
+
+    if args.data_root:
+        cfg.data_root = args.data_root
+
+    run_full_pipeline(skip_training=args.skip_training)
+
+
+if __name__ == "__main__":
+    main()
