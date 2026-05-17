@@ -23,6 +23,13 @@ class BirdEmbeddingModel(nn.Module):
     """
 
     def __init__(self, embedding_dim: int = None, pretrained: bool = True):
+        """
+        Initialize the EfficientNet-B0 projection model.
+
+        Args:
+            embedding_dim: Output embedding width. Defaults to `cfg.embedding_dim`.
+            pretrained: Whether to load ImageNet backbone weights.
+        """
         super().__init__()
         if embedding_dim is None:
             embedding_dim = cfg.embedding_dim
@@ -34,10 +41,28 @@ class BirdEmbeddingModel(nn.Module):
         self.embedding_dim = embedding_dim
 
     def forward(self, x):
+        """
+        Return L2-normalized embeddings for an image batch.
+
+        Args:
+            x: Image tensor with shape `[batch_size, 3, height, width]`.
+
+        Returns:
+            Tensor with shape `[batch_size, embedding_dim]`.
+        """
         emb = self.extract_features(x)
         emb = self.embedding(emb)
         emb = nn.functional.normalize(emb, dim=1)
         return emb
 
     def extract_features(self, x):
+        """
+        Return pooled backbone features before projection.
+
+        Args:
+            x: Image tensor with shape `[batch_size, 3, height, width]`.
+
+        Returns:
+            Tensor with shape `[batch_size, 1280]`.
+        """
         return self.pool(self.backbone(x)).flatten(1)
