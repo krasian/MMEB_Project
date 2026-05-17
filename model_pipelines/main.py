@@ -26,6 +26,7 @@ import os
 import sys
 import argparse
 import logging
+import runpy
 from pathlib import Path
 
 # Ensure both `model_pipelines.X` and `X` (top-level) imports work regardless
@@ -272,9 +273,8 @@ def _cmd_train_multimodal(args):
 
 
 def _cmd_evaluate_multimodal(args):
-    """Placeholder for future multimodal evaluation support."""
-    print("  Multimodal evaluation is not implemented yet.")
-    sys.exit(2)
+    """Run the late-fusion multimodal evaluation pipeline."""
+    runpy.run_module("model_pipelines.pipelines.late_fusion_multimodal", run_name="__main__")
 
 
 def _cmd_predict_multimodal(args):
