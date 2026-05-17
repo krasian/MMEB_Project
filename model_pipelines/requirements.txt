@@ -1,7 +1,8 @@
 # Bird Species Anomaly Detection — dependencies
 #
 # ── Environment ──────────────────────────────────────────────────────────────
-# Python  : 3.10  (required — torch-directml wheels are Python-version specific)
+# Python  : 3.10 is required only for the DirectML setup below because
+#           torch-directml wheels are Python-version specific.
 # Hardware: any DirectX 12 GPU on Windows (AMD, Intel, NVIDIA)
 #
 # ── Installation order matters ───────────────────────────────────────────────
@@ -18,7 +19,7 @@
 # reflect the environment that is confirmed working.
 #
 # ── Non-DirectML setup ───────────────────────────────────────────────────────
-# CUDA:    pip install torch==2.0.0 torchvision==0.15.1 --index-url https://download.pytorch.org/whl/cu118
+# CUDA:    pip install torch==2.0.0 torchvision==0.15.1 
 # CPU:     pip install torch==2.0.0 torchvision==0.15.1
 # Then:    pip install -r requirements.txt  (with the torch-directml line removed)
 #
@@ -43,6 +44,14 @@ scikit-learn==1.7.2
 # Image handling & visualisation
 Pillow==12.2.0
 matplotlib==3.10.8
+
+# Audio processing
+librosa
+soundfile
+
+# Config and data download helpers
+PyYAML
+requests
 
 # Utilities
 tqdm==4.67.3
