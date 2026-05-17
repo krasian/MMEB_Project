@@ -81,7 +81,6 @@ class BirdMAEExtractor:
         self.model.config.output_hidden_states = True
         self.model.config.output_attentions = False
         
-        # Or try setting this if available
         if hasattr(self.model.config, 'output_patches'):
             self.model.config.output_patches = True
         
@@ -138,17 +137,7 @@ class BirdMAEExtractor:
             inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
         outputs = self.model(**inputs)
-        """ 
-        # ---- TEMPORARY DIAGNOSTIC ----
-        print(f"DEBUG (FROM EXTRACT) last_hidden_state: {outputs.last_hidden_state.shape}")
-        if hasattr(outputs, 'hidden_states') and outputs.hidden_states is not None:
-            for i, hs in enumerate(outputs.hidden_states):
-                print(f"DEBUG (FROM EXTRACT) hidden_states[{i}]: {hs.shape}")
-        else:
-            print("DEBUG (FROM EXTRACT): hidden_states is None or not present")
-        print(f"DEBUG (FROM EXTRACT) available keys: {outputs.keys() if hasattr(outputs, 'keys') else dir(outputs)}")
-        # ---- END DIAGNOSTIC ----
-        """
+        
         # Get per-patch embeddings from hidden_states if available,
         # falling back to last_hidden_state
         if hasattr(outputs, 'hidden_states') and outputs.hidden_states is not None:
@@ -192,122 +181,6 @@ class BirdMAEExtractor:
         """Clear cache to free memory."""
         self.spatial_cache.clear()
     
-    def process_with_sliding_window(self, audio_path: str, 
-                                     window_duration: float = 5.0, 
-                                     step_duration: float = 2.5,
-                                     return_features: bool = True) -> Dict:
-        """
-        Process a long audio file using a sliding window approach.
-        
-        ARGUMENTS:
-            audio_path: Path to audio file
-            window_duration: Window size in seconds (default: 5.0)
-            step_duration: Step size in seconds (default: 2.5 for 50% overlap)
-            return_features: If True, return spatial features; if False, return audio windows
-        
-        RETURNS:
-            Dictionary containing:
-            - windows: List of audio windows or feature maps
-            - timestamps: List of (start_time, end_time) for each window
-            - num_windows: Number of windows processed
-            - total_duration: Total duration of audio file
-        """
-
-        # Load full audio
-        audio, sr = librosa.load(audio_path, sr=self.cfg.sample_rate, mono=True)
-        total_duration = len(audio) / sr
-        
-        # Calculate window and step in samples
-        window_samples = int(window_duration * sr)
-        step_samples = int(step_duration * sr)
-        #target_len = window_samples
-        
-        windows = []
-        timestamps = []
-        
-        starts = list(range(0, len(audio) - window_samples + 1, step_samples))
-        if not starts:
-            starts = [0]
-        # Include final partial window if it doesn't align with step
-        last_start = len(audio) - window_samples
-        if last_start > 0 and last_start % step_samples != 0:
-            starts.append(last_start)
-
-        for start_sample in starts:
-            window_audio = audio[start_sample:start_sample + window_samples]
-            start_time = start_sample / sr
-            end_time = (start_sample + window_samples) / sr
-
-            if return_features:
-                windows.append(self._extract_spatial_from_audio(window_audio, target_duration=window_duration))
-            else:
-                windows.append(window_audio)
-
-            timestamps.append({
-                'start': start_time,
-                'end': end_time,
-                'window_idx': len(windows) - 1
-            })
-
-        return {
-            'windows': windows,
-            'timestamps': timestamps,
-            'num_windows': len(windows),
-            'total_duration': total_duration,
-            'sample_rate': sr
-        }
-    
-    def precompute_window_features_for_file(self, audio_path: str,
-                                             window_duration: float = 5.0,
-                                             step_duration: float = 2.5) -> Dict:
-        """
-        Split a long audio file into overlapping windows and extract Bird-MAE
-        spatial features for each window.
-
-        ARGUMENTS:
-            audio_path: Path to audio file
-            window_duration: Window size in seconds (default: 5.0)
-            step_duration: Step between windows in seconds (default: 2.5)
-
-        RETURNS:
-            Dict mapping window_key -> {
-                'features':      [H, W, D] spatial feature map,
-                'timestamp':     {'start': float, 'end': float, 'window_idx': int},
-                'original_file': str
-            }
-        """
-        audio, sr = librosa.load(audio_path, sr=self.cfg.sample_rate, mono=True)
-        window_samples = int(window_duration * sr)
-        step_samples = int(step_duration * sr)
-        base_name = os.path.splitext(os.path.basename(audio_path))[0]
-
-        features_dict = {}
-        starts = list(range(0, len(audio) - window_samples + 1, step_samples))
-        if not starts:
-            starts = [0]
-        last_start = len(audio) - window_samples
-        if last_start > 0 and last_start % step_samples != 0:
-            starts.append(last_start)
-
-        for window_idx, start_sample in enumerate(starts):
-            window_audio = audio[start_sample:start_sample + window_samples]
-            start_time = start_sample / sr
-            end_time = (start_sample + window_samples) / sr
-
-            try:
-                spatial_features = self._extract_spatial_from_audio(
-                    window_audio, target_duration=window_duration
-                )
-                features_dict[f"{base_name}_window_{window_idx:04d}"] = {
-                    'features': spatial_features,
-                    'timestamp': {'start': start_time, 'end': end_time, 'window_idx': window_idx},
-                    'original_file': audio_path
-                }
-            except Exception as e:
-                print(f"      Warning: Window {window_idx} failed: {e}")
-
-        return features_dict
-
 
 class PrototypicalProbe(nn.Module):
     """
@@ -560,42 +433,6 @@ class BirdMAEModel(nn.Module):
         return self.probe.get_prototype_activations(x)
 
 
-def precompute_spatial_features(samples: List[Tuple[str, int]], 
-                                 cfg) -> Dict[str, np.ndarray]:
-    """
-    Precompute spatial features for all audio files.
-    
-    ARGUMENTS:
-        samples: List of (audio_path, label) tuples
-        cfg: Configuration object
-    
-    RETURNS:
-        Dictionary mapping audio_path -> spatial features [H, W, D]
-    """
-    print("\n" + "="*70)
-    print("Precomputing Bird-MAE Spatial Features for Prototypical Probing")
-    print("="*70)
-    
-    unique_paths = list(set([path for path, _ in samples]))
-    print(f"  Unique audio files: {len(unique_paths)}")
-    
-    extractor = BirdMAEExtractor(cfg)
-    
-    spatial_features = {}
-    for path in tqdm(unique_paths, desc="  Extracting spatial features", unit="file"):
-        try:
-            spatial_features[path] = extractor.get_spatial_features(path)
-        except Exception as e:
-            print(f"    Warning: Failed to extract from {path}: {e}")
-            spatial_features[path] = np.zeros((8, 32, cfg.birdmae_input_dim))
-    
-    print(f"\n  Precomputed {len(spatial_features)} spatial feature maps")
-    sample_shape = spatial_features[list(spatial_features.keys())[0]].shape
-    print(f"  Feature map shape: {sample_shape}")
-    print(f"  Feature map preserves spatial structure (H×W={sample_shape[0]}×{sample_shape[1]})")
-    
-    return spatial_features
-
 def precompute_window_features(samples: List[Tuple[str, int]],
                                cfg) -> Tuple[Dict[str, np.ndarray], Dict, Dict]:
     """
@@ -826,6 +663,7 @@ def precompute_window_features(samples: List[Tuple[str, int]],
         window_to_label,
         window_to_path
     )
+
 def create_window_dataloader(samples: List[Tuple[str, int]],
                               window_features: Dict[str, np.ndarray],
                               window_to_label: Dict[str, int],
@@ -907,34 +745,6 @@ class WindowDataset(torch.utils.data.Dataset):
         return feature_tensor, label
 
 
-def create_dataloader(samples: List[Tuple[str, int]], 
-                      spatial_features: Dict[str, np.ndarray],
-                      cfg,
-                      shuffle: bool = False) -> torch.utils.data.DataLoader:
-    """
-    Create a PyTorch DataLoader for prototypical probing.
-    
-    ARGUMENTS:
-        samples: List of (audio_path, label) tuples
-        spatial_features: Precomputed spatial features
-        cfg: Configuration object with batch_size
-        shuffle: Whether to shuffle the data
-    
-    RETURNS:
-        DataLoader yielding (spatial_features_tensor, labels)
-    """
-    from torch.utils.data import DataLoader
-    
-    dataset = SpatialAudioDataset(samples, spatial_features)
-    
-    return DataLoader(
-        dataset,
-        batch_size=cfg.batch_size,
-        shuffle=shuffle,
-        num_workers=0,
-        pin_memory=should_pin_memory(),
-        drop_last=False
-    )
 class SpatialAudioDataset(torch.utils.data.Dataset):
     """ Dataset for spatial feature maps (prototypical probing). """
     def __init__(self, samples: List[Tuple[str, int]], spatial_features: Dict[str, np.ndarray]):
@@ -950,101 +760,3 @@ class SpatialAudioDataset(torch.utils.data.Dataset):
         feature_tensor = torch.tensor(feature_map, dtype=torch.float32).permute(2, 0, 1)
         return feature_tensor, label
 
-
-# ============================================================================
-# Simple test without loading the actual model (for quick verification)
-# ============================================================================
-
-def quick_test():
-    """Quick test that doesn't load the actual Bird-MAE model."""
-    print("\n" + "="*70)
-    print("Quick Testing Prototypical Probe Only (No Model Loading)")
-    print("="*70)
-    
-    class DummyConfig:
-        def __init__(self):
-            self.sample_rate = 32000
-            self.duration = 5.0
-            self.batch_size = 32
-            self.birdmae_input_dim = 768
-            self.num_prototypes = 20
-            self.use_orthogonality_loss = True
-        
-        def device(self):
-            return get_device()
-    
-    cfg = DummyConfig()
-    
-    # Test prototypical probe
-    print("\n1. Testing prototypical probe...")
-    num_classes = 10
-    model = BirdMAEModel(cfg, num_classes=num_classes)
-    
-    # Create dummy spatial features [B, D, H, W]
-    B, D, H, W = 4, 768, 8, 32
-    dummy_features = torch.randn(B, D, H, W)
-    
-    # Forward pass
-    logits = model(dummy_features)
-    print(f"  Input shape: {dummy_features.shape}")
-    print(f"  Output logits shape: {logits.shape}")
-    
-    # Get orthogonality loss
-    ortho_loss = model.get_orthogonality_loss()
-    print(f"  Orthogonality loss: {ortho_loss.item():.4f}")
-    
-    # Test interpretability
-    print("\n2. Testing interpretability...")
-    interpretation = model.probe.get_interpretable_prediction(dummy_features)
-    print(f"  Probabilities shape: {interpretation['probabilities'].shape}")
-    print(f"  Prototype activations shape: {interpretation['prototype_activations'].shape}")
-    
-    print("\n" + "="*70)
-    print("All quick tests passed! Model architecture works.")
-    print("="*70)
-    print("\nNOTE: The full Bird-MAE model loading had a compatibility issue.")
-    print("This is a known issue with older transformers versions.")
-    print("\nTo fix the full model loading, you can:")
-    print("  1. Upgrade transformers: pip install --upgrade transformers")
-    print("  2. Or use the model without loading the pretrained weights")
-    print("\nThe prototypical probe architecture itself is working correctly.")
-
-
-# ============================================================================
-# Example usage and testing
-# ============================================================================
-
-if __name__ == "__main__":
-    # Run quick test first (doesn't load the actual model)
-    quick_test()
-    
-    # Then optionally try to load the actual model
-    print("\n" + "="*70)
-    print("Attempting to load full Bird-MAE model...")
-    print("="*70)
-    print("Note: This may fail due to transformers version compatibility.")
-    print("The quick test above already verified the probe works.\n")
-    
-    try:
-        class DummyConfig:
-            def __init__(self):
-                self.sample_rate = 32000
-                self.duration = 5.0
-                self.batch_size = 32
-                self.birdmae_input_dim = 768
-                self.num_prototypes = 20
-                self.use_orthogonality_loss = True
-            
-            def device(self):
-                return get_device()
-        
-        cfg = DummyConfig()
-        extractor = BirdMAEExtractor(cfg)
-        print("\nFull Bird-MAE model loaded successfully!")
-        
-    except Exception as e:
-        print(f"\nWarning: Full model loading failed: {e}")
-        print("\nBut don't worry - the prototypical probe itself works!")
-        print("You can still use the probe with your own features or")
-        print("upgrade transformers to fix the compatibility issue:")
-        print("  pip install --upgrade transformers")

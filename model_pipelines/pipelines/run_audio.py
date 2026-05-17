@@ -87,21 +87,6 @@ USAGE EXAMPLES:
     # Override data root directory
     python -m model_pipelines.pipelines.run_audio --data-root /custom/path
 
-    # Quick test with custom data (modify config.py first to limit species)
-    python -m model_pipelines.pipelines.run_audio
-
-WHAT YOU CAN DO AFTER RUNNING:
-==============================
-
-    1. Test outlier detection on new species:
-       python -m model_pipelines.pipelines.infer unknown_bird.wav
-
-    2. Analyze per-species performance:
-       python -m model_pipelines.tests.test_outlier_detection
-
-    3. Visualize prototype activations (see model_pipelines.utils.visualization)
-
-    4. Fine-tune hyperparameters in config.py and re-run
 """
 
 import os

@@ -226,18 +226,6 @@ def load_artifacts():
 # AUDIO: PROTOTYPICAL CONFIDENCE EVALUATION
 # ═════════════════════════════════════════════
 
-def evaluate_outlier_detector(model, test_known, test_outlier, embeddings,
-                               centroids, covariances, threshold, audio_cfg):
-    """Audio: Mahalanobis-based outlier detection (legacy MLP+ArcFace path)."""
-    # Implementation kept for backwards compatibility — unused in current
-    # prototypical-probing pipeline. See evaluate_outlier_detector_prototypical.
-    raise NotImplementedError(
-        "Mahalanobis evaluation for audio is not used — "
-        "current audio pipeline uses prototypical probing. "
-        "Call evaluate_outlier_detector_prototypical instead."
-    )
-
-
 def evaluate_outlier_detector_prototypical(known_confidences, outlier_confidences,
                                             threshold, known_labels=None,
                                             class_mapping=None,

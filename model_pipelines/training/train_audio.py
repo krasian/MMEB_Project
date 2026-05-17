@@ -230,29 +230,3 @@ def train_audio_model(cfg, train_samples, val_samples, spatial_features=None):
     model.load_state_dict(checkpoint["model_state_dict"])
     model.eval()
     return model
-
-
-def extract_embeddings_from_loader(model, loader, cfg):
-    device = cfg.device()
-    model.eval()
-    all_logits = []
-    all_labels = []
-    all_probabilities = []
-    with torch.no_grad():
-        for features, labels in tqdm(loader, desc="  Extracting features", leave=False):
-            features = features.to(device)
-            labels = labels.to(device)
-            logits = model(features)
-            probabilities = torch.sigmoid(logits)
-            all_logits.append(logits.cpu().numpy())
-            all_labels.append(labels.cpu().numpy())
-            all_probabilities.append(probabilities.cpu().numpy())
-    return {
-        "logits": np.vstack(all_logits),
-        "labels": np.concatenate(all_labels),
-        "probabilities": np.vstack(all_probabilities),
-    }
-
-
-def compute_centroid_accuracy(model, val_loader, train_embeddings, train_labels, cfg):
-    return compute_validation_accuracy(model, val_loader, cfg.device())
