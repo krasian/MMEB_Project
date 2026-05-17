@@ -11,20 +11,6 @@ Also writes per-epoch training history to:
 Use plot_training_history.py (or any plotting tool) to visualise the
 loss and validation accuracy curves over epochs.
 
-FIXES APPLIED:
-  1. ArcFaceLoss parameters (the class anchors) are now in the optimizer
-     so they actually get trained. Previously they were frozen at their
-     random initialization, which silently crippled the loss and led to
-     looser clusters / worse outlier detection.
-  2. Weight decay is set to 0 for the ArcFace anchors -- they live on
-     the unit sphere after normalization, so shrinking them toward 0 is
-     meaningless.
-  3. Train embeddings used for centroid-based val accuracy are now
-     recomputed in a clean forward pass AFTER the epoch finishes,
-     instead of being collected mid-epoch from a moving model. This
-     gives an honest val number and so a more reliable best-checkpoint
-     selection.
-  4. Per-epoch metrics are logged to JSON + CSV for plotting.
 """
 import os
 import csv
