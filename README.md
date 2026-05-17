@@ -90,7 +90,7 @@ results/multimodal_results/
 Before running the visual pipeline, place the cleaned source CSVs in:
 
 ```text
-data/raw/
+data/clean_csv/
 ```
 
 The downloader expects these files:
