@@ -11,6 +11,20 @@ Also writes per-epoch training history to:
 Use plot_training_history.py (or any plotting tool) to visualise the
 loss and validation accuracy curves over epochs.
 
+FIXES APPLIED:
+  1. ArcFaceLoss parameters (the class anchors) are now in the optimizer
+     so they actually get trained. Previously they were frozen at their
+     random initialization, which silently crippled the loss and led to
+     looser clusters / worse outlier detection.
+  2. Weight decay is set to 0 for the ArcFace anchors -- they live on
+     the unit sphere after normalization, so shrinking them toward 0 is
+     meaningless.
+  3. Train embeddings used for centroid-based val accuracy are now
+     recomputed in a clean forward pass AFTER the epoch finishes,
+     instead of being collected mid-epoch from a moving model. This
+     gives an honest val number and so a more reliable best-checkpoint
+     selection.
+  4. Per-epoch metrics are logged to JSON + CSV for plotting.
 """
 import os
 import csv
@@ -86,7 +100,8 @@ def train_model(train_samples: list, val_samples: list):
 
     train_loader = make_loader(train_samples, "train", shuffle=True)
     val_loader = make_loader(val_samples, "val")
-    
+    # Separate loader for clean post-epoch embedding extraction (no shuffle,
+    # no augmentation -- uses the "val" transforms for deterministic features).
     train_eval_loader = make_loader(train_samples, "val", shuffle=False)
 
     model = BirdEmbeddingModel().to(device)
@@ -94,7 +109,9 @@ def train_model(train_samples: list, val_samples: list):
         cfg.embedding_dim, cfg.number_of_classes,
         s=cfg.arcface_scaler, m=cfg.arcface_margin).to(device)
 
-    
+    # FIX: include criterion.parameters() so the ArcFace class anchors
+    # actually get trained. Anchors get NO weight decay (they're normalized
+    # to the unit sphere in forward, so decaying them toward 0 is moot).
     optimizer = torch.optim.AdamW([
         {"params": model.backbone.parameters(),
          "lr": cfg.learning_rate * 0.1},
@@ -130,7 +147,11 @@ def train_model(train_samples: list, val_samples: list):
             total_loss += loss.item() * imgs.size(0)
             total += imgs.size(0)
 
-        
+        # FIX: recompute train embeddings AFTER the epoch with the final
+        # weights and deterministic (val) transforms. Previously we used
+        # embeddings collected during training, which came from a model
+        # whose weights changed every batch -- so the centroids were a
+        # blur of early-epoch and late-epoch states.
         model.eval()
         cached_train_embs, cached_train_labels = _extract_embeddings_raw(
             model, train_eval_loader)
@@ -138,7 +159,8 @@ def train_model(train_samples: list, val_samples: list):
         val_acc = _compute_val_accuracy(
             model, val_loader, cached_train_embs, cached_train_labels)
 
-        
+        # Grab the current LR from the head group BEFORE stepping the
+        # scheduler so the logged LR matches the one used this epoch.
         current_lr = optimizer.param_groups[1]["lr"]
         scheduler.step()
 
@@ -152,11 +174,16 @@ def train_model(train_samples: list, val_samples: list):
 
         if is_best:
             best_val_acc = val_acc
-            torch.save(model.state_dict(),
+            cpu_state_dict = {
+                name: tensor.detach().cpu()
+                for name, tensor in model.state_dict().items()
+            }
+            torch.save(cpu_state_dict,
                        os.path.join(cfg.checkpoint_directory, "best_model.pt"))
             print(f"    [+] Checkpoint saved (val_acc={val_acc:.3f})")
 
-        
+        # Append this epoch's row and flush history to disk every epoch
+        # so a crash doesn't lose the curve.
         history.append({
             "epoch":         epoch + 1,
             "train_loss":    round(avg_loss, 6),
