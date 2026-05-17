@@ -30,13 +30,30 @@ class BirdCSVDataset(Dataset):
     """
 
     def __init__(self, samples: list, transform=None):
+        """
+        Store labeled samples and an optional preprocessing transform.
+
+        Args:
+            samples: List of `(image_path, label)` pairs.
+            transform: Callable applied to each loaded image before return.
+        """
         self.samples = samples
         self.transform = transform
 
     def __len__(self):
+        """Return the number of image samples in the dataset."""
         return len(self.samples)
 
     def __getitem__(self, idx):
+        """
+        Load, transform, and return one image sample.
+
+        Args:
+            idx: Sample index.
+
+        Returns:
+            Tuple of `(image_tensor, label)` after preprocessing.
+        """
         path, label = self.samples[idx]
         try:
             img = Image.open(path).convert("RGB")
