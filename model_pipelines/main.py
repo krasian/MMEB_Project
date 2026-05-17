@@ -266,62 +266,21 @@ def _cmd_predict_audio(args):
 # ─────────────────────────────────────────────
 
 def _cmd_train_multimodal(args):
-    """Multimodal has no training — it fuses already-trained unimodal scores."""
-    print("  Multimodal does not require its own training.")
-    print("  Train the visual and audio pipelines first, then run:")
-    print("    python main.py evaluate multimodal")
-    sys.exit(0)
+    """Placeholder for future multimodal training support."""
+    print("  Multimodal training is not implemented yet.")
+    sys.exit(2)
 
 
 def _cmd_evaluate_multimodal(args):
-    try:
-        from pipelines.run_multimodal import run_full_pipeline
-    except ImportError:
-        from model_pipelines.pipelines.run_multimodal import run_full_pipeline
-    run_full_pipeline()
+    """Placeholder for future multimodal evaluation support."""
+    print("  Multimodal evaluation is not implemented yet.")
+    sys.exit(2)
 
 
 def _cmd_predict_multimodal(args):
-    """Score one image+audio pair using late fusion."""
-    try:
-        from inference.visual_detector import VisualAnomalyDetector
-        from inference.audio_detector  import AudioAnomalyDetector
-    except ImportError:
-        from model_pipelines.inference.visual_detector import VisualAnomalyDetector
-        from model_pipelines.inference.audio_detector  import AudioAnomalyDetector
-
-    print("── Loading both modalities ──")
-    visual = VisualAnomalyDetector(checkpoint_dir=args.checkpoint_dir)
-    audio  = AudioAnomalyDetector(checkpoint_dir=args.audio_checkpoint_dir)
-
-    print(f"  Visual threshold: {visual.centroid_threshold:.4f}")
-    print(f"  Audio threshold : {audio.threshold:.4f}")
-
-    v_result = visual.predict(args.image)
-    a_result = audio.predict(args.audio)
-
-    if "error" in v_result or "error" in a_result:
-        print(f"  Visual: {v_result}")
-        print(f"  Audio:  {a_result}")
-        sys.exit(1)
-
-    # Normalise by threshold
-    v_norm = -v_result["distance"]   / visual.centroid_threshold  # higher = known
-    a_norm = a_result["confidence"]  / audio.threshold            # higher = known
-
-    # Default alpha 0.5 — for a single sample we can't grid search
-    alpha = args.alpha
-    fused = alpha * v_norm + (1 - alpha) * a_norm
-    is_outlier = fused < 1.0
-
-    print(f"\n  Visual prediction : {v_result['predicted_class']} "
-          f"(distance={v_result['distance']:.3f}, "
-          f"normalised={v_norm:.3f})")
-    print(f"  Audio prediction  : {a_result['predicted_class']} "
-          f"(confidence={a_result['confidence']:.3f}, "
-          f"normalised={a_norm:.3f})")
-    print(f"\n  Fused score (alpha={alpha}): {fused:.3f}  "
-          f"({'OUTLIER ⚠' if is_outlier else 'KNOWN ✓'})")
+    """Placeholder for future multimodal prediction support."""
+    print("  Multimodal prediction is not implemented yet.")
+    sys.exit(2)
 
 
 # ─────────────────────────────────────────────
