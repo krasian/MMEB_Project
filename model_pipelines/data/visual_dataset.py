@@ -31,7 +31,7 @@ class BirdCSVDataset(Dataset):
 
     def __init__(self, samples: list, transform=None):
         """
-        Store labeled samples and an optional preprocessing transform.
+        Initialize a labeled image dataset.
 
         Args:
             samples: List of `(image_path, label)` pairs.
@@ -46,7 +46,7 @@ class BirdCSVDataset(Dataset):
 
     def __getitem__(self, idx):
         """
-        Load, transform, and return one image sample.
+        Return one transformed image sample and label.
 
         Args:
             idx: Sample index.
