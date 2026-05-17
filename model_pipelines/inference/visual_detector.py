@@ -16,7 +16,7 @@ def load_model() -> BirdEmbeddingModel:
     """Load the best saved model weights from disk, with dim validation."""
     device = cfg.device()
     checkpoint = os.path.join(cfg.checkpoint_directory, "best_model.pt")
-    state_dict = torch.load(checkpoint, map_location=device)
+    state_dict = torch.load(checkpoint, map_location="cpu")
 
     saved_dim = state_dict["embedding.weight"].shape[0]
     if saved_dim != cfg.embedding_dim:
