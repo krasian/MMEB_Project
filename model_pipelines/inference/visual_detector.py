@@ -34,7 +34,7 @@ def load_model() -> BirdEmbeddingModel:
 
 class VisualAnomalyDetector:
     """
-    Load visual artifacts and score images for known-class vs outlier decisions.
+    Visual centroid-distance detector backed by saved training artifacts.
 
     Usage:
         detector = VisualAnomalyDetector()
@@ -43,11 +43,10 @@ class VisualAnomalyDetector:
 
     def __init__(self, checkpoint_dir: str = None):
         """
-        Load the trained encoder, centroid artifacts, and decision threshold.
+        Load model weights and centroid detector artifacts.
 
         Args:
-            checkpoint_dir: Directory containing saved visual artifacts. Uses
-                `cfg.checkpoint_directory` when omitted.
+            checkpoint_dir: Artifact directory. Defaults to `cfg.checkpoint_directory`.
         """
         if checkpoint_dir is None:
             checkpoint_dir = cfg.checkpoint_directory
@@ -77,14 +76,13 @@ class VisualAnomalyDetector:
     @torch.no_grad()
     def predict(self, image_path: str) -> dict:
         """
-        Score one image against the saved class centroids.
+        Score one image against saved class centroids.
 
         Args:
             image_path: Path to an image file.
 
         Returns:
-            A prediction dictionary with class name, distance, threshold, and
-            outlier flag; or `{"error": str}` when the file does not exist.
+            Prediction fields, or `{"error": str}` if the path is missing.
         """
         if not os.path.exists(image_path):
             return {"error": f"File not found: {image_path}"}
