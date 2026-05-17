@@ -20,6 +20,7 @@ import os
 import sys
 import ctypes
 import logging
+from pathlib import Path
 import pandas as pd
 import requests
 from tqdm import tqdm
@@ -29,8 +30,9 @@ if sys.platform == "win32":
 
 
 # ---- Configuration ---------------------------------------------------------
-DATA_RAW_DIR = r"D:\MMEB-Project\data\raw"
-DATA_PROCESSED_DIR = r"D:\MMEB-Project\data\processed"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DATA_RAW_DIR = PROJECT_ROOT / "data" / "clean_csv"
+DATA_PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
 
 INPUT_CSV = [
     "blackbird_clean.csv",
@@ -77,7 +79,7 @@ IMAGE_FOLDER = [
     "downloaded_mallard_test_images"
 ]
 
-LOG_FILE = os.path.join(DATA_PROCESSED_DIR, "download_failures.log")
+LOG_FILE = DATA_PROCESSED_DIR / "download_failures.log"
 
 
 # ---- Logging ---------------------------------------------------------------
@@ -155,6 +157,13 @@ def download_image(url: str, filename: str, row_id):
         return None, 0
 
 
+def require_file(path: Path, label: str) -> Path:
+    """Return `path` when present, otherwise raise a precise missing-file error."""
+    if not path.exists():
+        raise FileNotFoundError(f"Required {label} file not found at '{path}'.")
+    return path
+
+
 # Bar format with the iteration rate stripped out — we show MB/s in postfix.
 BAR_FORMAT = "{l_bar}{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}{postfix}]"
 
@@ -163,14 +172,15 @@ def main():
     prevent_sleep()
     try:
         for folder in IMAGE_FOLDER:
-            os.makedirs(os.path.join(DATA_PROCESSED_DIR, folder), exist_ok=True)
+            os.makedirs(DATA_PROCESSED_DIR / folder, exist_ok=True)
 
         tqdm.write("Controls: press 'p' to pause/resume, 'q' to quit.")
 
         for n, csv_in in enumerate(INPUT_CSV):
-            df = pd.read_csv(os.path.join(DATA_RAW_DIR, csv_in))
+            input_csv_path = require_file(DATA_RAW_DIR / csv_in, "input iNaturalist CSV")
+            df = pd.read_csv(input_csv_path)
             new_image_paths = []
-            output_csv_path = os.path.join(DATA_PROCESSED_DIR, OUTPUT_CSV[n])
+            output_csv_path = DATA_PROCESSED_DIR / OUTPUT_CSV[n]
             failures = 0
             total_bytes = 0
             quit_now = False
@@ -194,9 +204,9 @@ def main():
                     continue
 
                 filename = f"{row['id']}.jpg"
-                filepath = os.path.join(DATA_PROCESSED_DIR, IMAGE_FOLDER[n], filename)
+                filepath = DATA_PROCESSED_DIR / IMAGE_FOLDER[n] / filename
 
-                saved_path, nbytes = download_image(image_url, filepath, row["id"])
+                saved_path, nbytes = download_image(image_url, str(filepath), row["id"])
                 new_image_paths.append(saved_path)
                 total_bytes += nbytes
 
