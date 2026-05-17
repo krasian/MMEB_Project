@@ -10,7 +10,10 @@ AudioConfig directly (instantiated where needed).
 import os
 import torch
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Dict, List
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 # ─────────────────────────────────────────────
@@ -21,7 +24,7 @@ from typing import Dict, List
 class BaseConfig:
     """Base configuration shared across all pipelines."""
 
-    root_dir: str = r"D:\MMEB-Project\data\processed"
+    root_dir: str = str(PROJECT_ROOT / "data" / "processed")
     embedding_dim: int = 512
 
     training_split_ratio: float = 0.70
@@ -36,8 +39,8 @@ class BaseConfig:
 
     percentile_of_threshold: int = 95
 
-    checkpoint_directory: str = r"D:\MMEB-Project\checkpoints"
-    results_directory: str = r"D:\MMEB-Project\results"
+    checkpoint_directory: str = str(PROJECT_ROOT / "checkpoints")
+    results_directory: str = str(PROJECT_ROOT / "results")
 
     def device(self) -> torch.device:
         """DirectML > CUDA > CPU. Imported lazily to avoid circular imports."""
@@ -115,8 +118,8 @@ class AudioConfig(BaseConfig):
     })
 
     def __post_init__(self):
-        self.checkpoint_directory = "audio_checkpoints"
-        self.results_directory = "audio_results"
+        self.checkpoint_directory = str(PROJECT_ROOT / "audio_checkpoints")
+        self.results_directory = str(PROJECT_ROOT / "audio_results")
 
     def get_active_native_folders(self) -> List[str]:
         return [f for f in self.native_folders
@@ -139,7 +142,7 @@ class VisualConfig:
     """All visual-pipeline settings. Patched by load_config.apply_yaml_config()."""
 
     def __init__(self):
-        self.data_root = str(os.environ.get("DATA_ROOT", ""))
+        self.data_root = str(os.environ.get("DATA_ROOT", PROJECT_ROOT / "data" / "processed"))
         self.known_csv = {
             "Common Blackbird":  "updated_blackbird_data.csv",
             "Eurasian Blue Tit": "updated_EurasianBlueTit_data.csv",
@@ -165,8 +168,8 @@ class VisualConfig:
         self.percentile_of_threshold = 75
         self.distance_metric = "mahalanobis"
 
-        self.checkpoint_directory = "checkpoints"
-        self.results_directory = "results"
+        self.checkpoint_directory = str(PROJECT_ROOT / "checkpoints")
+        self.results_directory = str(PROJECT_ROOT / "results")
 
         self.embeding_visulize_method = "tsne"
         self.result_dpi = 300
