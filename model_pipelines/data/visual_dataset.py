@@ -73,6 +73,8 @@ birdcsvdata = BirdCSVDataset
 def load_csv_paths(csv_filename: str, label: int) -> list:
     """Read a species CSV and return a list of (image_path, label) tuples."""
     csv_path = os.path.join(cfg.data_root, csv_filename)
+    if not os.path.exists(csv_path):
+        raise FileNotFoundError(f"Required species CSV not found at '{csv_path}'.")
     df = pd.read_csv(csv_path)
     return [(str(p), label) for p in df["image_path"].dropna()]
 
