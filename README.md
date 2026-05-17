@@ -53,7 +53,7 @@ Expected folders:
 
 ```text
 data/
-  clean_csv/
+  raw/
   processed/
 metadata/
 model_pipelines/
@@ -90,7 +90,7 @@ results/multimodal_results/
 Before running the visual pipeline, place the cleaned source CSVs in:
 
 ```text
-data/clean_csv/
+data/raw/
 ```
 
 The downloader expects these files:
@@ -107,6 +107,7 @@ sparrow_clean.csv
 starling_clean.csv
 thrush_clean.csv
 toucan_clean.csv
+mallard-test.csv
 ```
 
 Each input CSV must contain:
@@ -199,6 +200,8 @@ results/embedding_space.png
 New visual checkpoints are saved in a CPU-portable format even if training runs on DirectML.
 
 ## 7. Run The Audio Pipeline
+
+Download the Xeno-Canto audio data with `download_audio.py` before running the audio pipeline.
 
 The audio pipeline expects Xeno-Canto-style folders under:
 
